@@ -81,6 +81,11 @@
 				},
 				"publisherDisplayName": "Microsoft"
 			}
+		},
+		{
+			"name": "Hify-agent",
+			"version": "1.0.0",
+			"repo": "file:extensions/Hify-agent"
 		}
 	]
 }

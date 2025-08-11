@@ -1,0 +1,3 @@
+[submodule "extensions/Hify-agent"]
+	path = extensions/Hify-agent
+	url = git@github.com:LikeRainDay/Hify-agent.git

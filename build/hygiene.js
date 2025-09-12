@@ -251,6 +251,10 @@ function createGitIndexVinyls(paths) {
 					{ maxBuffer: stat.size, encoding: 'buffer' },
 					(err, out) => {
 						if (err) {
+							// If it's a submodule or other special file, skip it
+							if (err.message && err.message.includes('bad object')) {
+								return c(null);
+							}
 							return e(err);
 						}
 

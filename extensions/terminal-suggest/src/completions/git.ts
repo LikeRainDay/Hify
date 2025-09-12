@@ -5,6 +5,8 @@
 
 /* eslint-disable local/code-no-unexternalized-strings */
 
+import * as vscode from 'vscode';
+
 function ai(...args: any[]): undefined { return undefined; }
 
 const filterMessages = (out: string): string => {
@@ -87,7 +89,7 @@ const postProcessBranches =
 								name: branch.replace("*", "").trim(),
 								description: "Current branch",
 								priority: 100,
-								icon: "⭐️", // allow-any-unicode-next-line
+								icon: `vscode://icon?type=${vscode.TerminalCompletionItemKind.Branch}`
 							};
 						} else if (parts[0] === "+") {
 							// Branch checked out in another worktree.
@@ -110,7 +112,7 @@ const postProcessBranches =
 					return {
 						name,
 						description,
-						icon: "fig://icon?type=git",
+						icon: `vscode://icon?type=${vscode.TerminalCompletionItemKind.Branch}`,
 						priority: 75,
 					};
 				})
@@ -126,7 +128,7 @@ const postProcessBranches =
 				});
 		};
 
-export const gitGenerators: Record<string, Fig.Generator> = {
+export const gitGenerators = {
 	// Commit history
 	commits: {
 		script: ["git", "--no-optional-locks", "log", "--oneline", "-n", "1000"],
@@ -146,12 +148,12 @@ export const gitGenerators: Record<string, Fig.Generator> = {
 			return lines.map((line) => {
 				return {
 					name: line.substring(0, hashLength),
-					icon: "fig://icon?type=node",
+					icon: `vscode://icon?type=${vscode.TerminalCompletionItemKind.Commit}`,
 					description: line.substring(descriptionStart),
 				};
 			});
 		},
-	},
+	} satisfies Fig.Generator,
 
 	// user aliases
 	aliases: {
@@ -178,7 +180,7 @@ export const gitGenerators: Record<string, Fig.Generator> = {
 				return true;
 			});
 		},
-	},
+	} satisfies Fig.Generator,
 
 	revs: {
 		script: ["git", "rev-list", "--all", "--oneline"],
@@ -192,12 +194,12 @@ export const gitGenerators: Record<string, Fig.Generator> = {
 			return output.split("\n").map((line) => {
 				return {
 					name: line.substring(0, 7),
-					icon: "fig://icon?type=node",
+					icon: `vscode://icon?type=${vscode.TerminalCompletionItemKind.Commit}`,
 					description: line.substring(7),
 				};
 			});
 		},
-	},
+	} satisfies Fig.Generator,
 
 	// Saved stashes
 	// TODO: maybe only print names of stashes
@@ -215,11 +217,11 @@ export const gitGenerators: Record<string, Fig.Generator> = {
 					// account for conventional commit messages
 					name: file.split(":").slice(2).join(":"),
 					insertValue: file.split(":")[0],
-					icon: `fig://icon?type=node`,
+					icon: `vscode://icon?type=${vscode.TerminalCompletionItemKind.Stash}`,
 				};
 			});
 		},
-	},
+	} satisfies Fig.Generator,
 
 	// Tree-ish
 	// This needs to be fleshed out properly....
@@ -245,7 +247,7 @@ export const gitGenerators: Record<string, Fig.Generator> = {
 				};
 			});
 		},
-	},
+	} satisfies Fig.Generator,
 
 	// All branches
 	remoteLocalBranches: {
@@ -258,7 +260,7 @@ export const gitGenerators: Record<string, Fig.Generator> = {
 			"--sort=-committerdate",
 		],
 		postProcess: postProcessBranches({ insertWithoutRemotes: true }),
-	},
+	} satisfies Fig.Generator,
 
 	localBranches: {
 		script: [
@@ -269,7 +271,7 @@ export const gitGenerators: Record<string, Fig.Generator> = {
 			"--sort=-committerdate",
 		],
 		postProcess: postProcessBranches({ insertWithoutRemotes: true }),
-	},
+	} satisfies Fig.Generator,
 
 	// custom generator to display local branches by default or
 	// remote branches if '-r' flag is used. See branch -d for use
@@ -308,7 +310,7 @@ export const gitGenerators: Record<string, Fig.Generator> = {
 				);
 			}
 		},
-	},
+	} satisfies Fig.Generator,
 
 	remotes: {
 		script: ["git", "--no-optional-locks", "remote", "-v"],
@@ -325,27 +327,14 @@ export const gitGenerators: Record<string, Fig.Generator> = {
 				}, {});
 
 			return Object.keys(remoteURLs).map((remote) => {
-				const url = remoteURLs[remote];
-				let icon = "box";
-				if (url.includes("github.com")) {
-					icon = "github";
-				}
-
-				if (url.includes("gitlab.com")) {
-					icon = "gitlab";
-				}
-
-				if (url.includes("heroku.com")) {
-					icon = "heroku";
-				}
 				return {
 					name: remote,
-					icon: `fig://icon?type=${icon}`,
+					icon: `vscode://icon?type=${vscode.TerminalCompletionItemKind.Remote}`,
 					description: "Remote",
 				};
 			});
 		},
-	},
+	} satisfies Fig.Generator,
 
 	tags: {
 		script: [
@@ -358,10 +347,10 @@ export const gitGenerators: Record<string, Fig.Generator> = {
 		postProcess: function (output) {
 			return output.split("\n").map((tag) => ({
 				name: tag,
-				icon: "🏷️", // allow-any-unicode-next-line
+				icon: `vscode://icon?type=${vscode.TerminalCompletionItemKind.Tag}`
 			}));
 		},
-	},
+	} satisfies Fig.Generator,
 
 	// Files for staging
 	files_for_staging: {
@@ -461,40 +450,53 @@ export const gitGenerators: Record<string, Fig.Generator> = {
 				}),
 			];
 		},
-	},
+	} satisfies Fig.Generator,
 
 	getStagedFiles: {
-		script: [
-			"bash",
-			"-c",
-			"git --no-optional-locks status --short | sed -ne '/^M /p' -e '/A /p'",
-		],
-		postProcess: postProcessTrackedFiles,
-	},
+		script: ["git", "--no-optional-locks", "status", "--short"],
+		postProcess: (out, context) => {
+			const output = filterMessages(out);
+
+			if (output.startsWith("fatal:")) {
+				return [];
+			}
+
+			const filteredLines = output.split("\n").filter(line => {
+				return line.match(/^M /) || line.match(/A /);
+			});
+
+			return postProcessTrackedFiles(filteredLines.join("\n"), context);
+		},
+	} satisfies Fig.Generator,
 
 	getUnstagedFiles: {
 		script: ["git", "--no-optional-locks", "diff", "--name-only"],
 		splitOn: "\n",
-	},
+	} satisfies Fig.Generator,
 
 	getChangedTrackedFiles: {
-		script: function (context) {
-			if (context.includes("--staged") || context.includes("--cached")) {
-				return [
-					"bash",
-					"-c",
-					`git --no-optional-locks status --short | sed -ne '/^M /p' -e '/A /p'`,
-				];
-			} else {
-				return [
-					"bash",
-					"-c",
-					`git --no-optional-locks status --short | sed -ne '/M /p' -e '/A /p'`,
-				];
+		script: ["git", "--no-optional-locks", "status", "--short"],
+		postProcess: (out, context) => {
+			const output = filterMessages(out);
+
+			if (output.startsWith("fatal:")) {
+				return [];
 			}
+
+			let filteredLines;
+			if (context.includes("--staged") || context.includes("--cached")) {
+				filteredLines = output.split("\n").filter(line => {
+					return line.match(/^M /) || line.match(/A /);
+				});
+			} else {
+				filteredLines = output.split("\n").filter(line => {
+					return line.match(/M /) || line.match(/A /);
+				});
+			}
+
+			return postProcessTrackedFiles(filteredLines.join("\n"), context);
 		},
-		postProcess: postProcessTrackedFiles,
-	},
+	} satisfies Fig.Generator,
 };
 
 const configSuggestions: Fig.Suggestion[] = [
@@ -8115,7 +8117,7 @@ const completionSpec: Fig.Spec = {
 						{
 							name: "-",
 							description: "Switch to the last used branch",
-							icon: "fig://icon?type=git",
+							icon: `vscode://icon?type=${vscode.TerminalCompletionItemKind.Branch}`
 						},
 						{
 							name: "--",
@@ -9281,7 +9283,7 @@ const completionSpec: Fig.Spec = {
 						{
 							name: "-",
 							description: "Switch to the last used branch",
-							icon: "fig://icon?type=git",
+							icon: `vscode://icon?type=${vscode.TerminalCompletionItemKind.Branch}`
 						},
 					],
 				},

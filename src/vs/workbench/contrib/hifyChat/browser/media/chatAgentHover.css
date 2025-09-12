@@ -1,0 +1,87 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.hify-chat-agent-hover {
+	line-height: unset;
+	padding: 6px 0px;
+}
+
+.hify-chat-agent-hover-header {
+	display: flex;
+	gap: 8px;
+	margin-bottom: 4px;
+}
+
+.hify-chat-agent-hover-icon img,
+.hify-chat-agent-hover-icon .codicon {
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	outline: 1px solid var(--vscode-hify-chat-requestBorder);
+}
+
+.hify-chat-agent-hover .hify-chat-agent-hover-icon .codicon {
+	font-size: 23px !important; /* Override workbench hover styles */
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.hify-chat-agent-hover-publisher {
+	display: flex;
+	gap: 4px;
+}
+
+.hify-chat-agent-hover .hify-chat-agent-hover-publisher .codicon.codicon-extensions-verified-publisher {
+	color: var(--vscode-extensionIcon-verifiedForeground);
+}
+
+.hify-chat-agent-hover .extension-verified-publisher {
+	display: none;
+}
+
+.hify-chat-agent-hover.verifiedPublisher .extension-verified-publisher {
+	display: flex;
+	align-items: start;
+	margin-top: 1px;
+}
+
+.hify-chat-agent-hover .hify-chat-agent-hover-warning .codicon {
+	color: var(--vscode-notificationsWarningIcon-foreground) !important;
+	margin-right: 3px;
+}
+
+.hify-chat-agent-hover.allowedName .hify-chat-agent-hover-warning {
+	display: none;
+}
+
+.hify-chat-agent-hover-header .hify-chat-agent-hover-name {
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.hify-chat-agent-hover-header .hify-chat-agent-hover-details {
+	font-size: 12px;
+}
+
+.hify-chat-agent-hover-extension {
+	display: flex;
+	gap: 6px;
+	color: var(--vscode-descriptionForeground);
+}
+
+.hify-chat-agent-hover.noExtensionName .hify-chat-agent-hover-separator,
+.hify-chat-agent-hover.noExtensionName .hify-chat-agent-hover-extension-name {
+	display: none;
+}
+
+.hify-chat-agent-hover-separator {
+	opacity: 0.7;
+}
+
+.hify-chat-agent-hover-description,
+.hify-chat-agent-hover-warning {
+	font-size: 13px;
+}
